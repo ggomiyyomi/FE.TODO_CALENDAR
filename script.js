@@ -130,7 +130,7 @@ gotoBtn.addEventListener("click",gotoDate);
 // 입력된 날짜로 가는 기능
 function gotoDate() {
     const dateArr = dateInput.value.split("/");
-    // 입력 날짜 정확성 확인
+    // 입력 날짜 존재 확인
     if(dateArr.length === 2) {
         if(dateArr[0] > 0 && dateArr[0] < 13 && dateArr[1].length === 4) {
             month = dateArr[0] - 1;
@@ -139,6 +139,6 @@ function gotoDate() {
             return;
         }
     }
-    // 입력한 날짜가 틀리다면
-    alert("invalid date");
+    // 입력한 날짜가 존재하지않는다면
+    alert("Invalid Date");
 }
