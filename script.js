@@ -21,7 +21,35 @@ const months = [
     "November", "December"
 ];
 
-
+//default 이벤트 배열
+const eventsArr = [
+    {
+        day: 17,
+        month: 12,
+        year: 2024,
+        events: [
+            {
+                title: "Event 1 lorem ipsun dolar sit genfa tersd dsad ",
+                time: "10:00 AM",
+            },
+            {
+                title: "Event 2",
+                time: "11:00 AM",
+            },
+        ],
+    },
+    {
+        day: 30,
+        month: 12,
+        year: 2024,
+        events: [
+            {
+                title: "Event 1 lorem ipsun dolar sit genfa tersd dsad ",
+                time: "10:00 AM",
+            },
+        ],
+    },
+];
 
 
 // days 추가 함수
@@ -49,17 +77,44 @@ function initCalendar() {
     }
     // 현재달 days
     for(let i=1; i<=lastDate; i++) {
+
+        // 현 날짜에 현재 이벤트가 표시되는지 확인
+        let event = false;
+        eventsArr.forEach((eventObj)=> {
+            if(
+                eventObj.day ===i &&
+                eventObj.month === month + 1 &&
+                eventObj.year === year
+            )
+            {
+                // 이벤트를 찾으면
+                event = true;
+            }
+        })
+
+
+
+
         //만약 날짜가 오늘이라면 class에 today 추가
         if ( 
             i === new Date().getDate() &&
             year === new Date().getFullYear() &&
             month === new Date().getMonth()
         ) {
-            days += `<div class="day today"> ${i} </div>`;
+            // 이벤트를 발견하거나 또한 이벤트 클래스가 추가된다면
+            if(event) {
+                days += `<div class="day today event "> ${i} </div>`;
+            } else {
+                days += `<div class="day today"> ${i} </div>`;
+            }
         }
         //이외 추가
         else {
-            days += `<div class="day"> ${i} </div>`;
+            if(event) {
+                days += `<div class="day event "> ${i} </div>`;
+            } else {
+                days += `<div class="day"> ${i} </div>`;
+            }
         }
     }
     //다음달 days
@@ -142,3 +197,60 @@ function gotoDate() {
     // 입력한 날짜가 존재하지않는다면
     alert("Invalid Date");
 }
+
+
+// 이벤트 생성 선언
+const addEventBtn  = document.querySelector(".add-event"),
+    addEventContainer  = document.querySelector(".add-event-wrapper"),
+    addEventCloseBtn = document.querySelector(".close"),
+
+    addEventTitle = document.querySelector(".event-name"),
+    addEventFrom = document.querySelector(".event-time-from"),
+    addEventTo = document.querySelector(".event-time-to");
+
+
+// 이벤트 추가 버튼 생성 및 제거
+addEventBtn.addEventListener("click", () => {
+    addEventContainer.classList.toggle("active"); //클래스에 active 추가
+});
+addEventCloseBtn.addEventListener("click", () => {
+    addEventContainer.classList.remove("active"); //클래스에 active 제거
+});
+document.addEventListener("click", (e) => {
+    //만약 바깥쪽을 눌렀을 경우
+    if(e.target != addEventBtn && !addEventContainer.contains(e.target)) {
+        addEventContainer.classList.remove("active"); //클래스에 active 제거
+    }
+});
+
+// 이벤트 일정 추가 
+// 이벤트 제목 50자만 가능하도록
+addEventTitle.addEventListener("input", (e)=> {
+    addEventTitle.value = addEventTitle.value.slice(0,50);
+});
+// 이벤트 시간 형식 설정
+addEventFrom.addEventListener("input", (e)=> {
+    // 숫자와 : 말고 다른 글자는 제거
+    addEventFrom.value = addEventFrom.value.replace(/[^0-9:]/g,"");
+    // 두 숫자가 들어갔을때 자동으로 ":" 추가
+    if(addEventFrom.value.length===2) {
+        addEventFrom.value += ":";
+    }
+    // 사용자가 5자이상 못쓰도록 설정
+    if(addEventFrom.value.length > 5) {
+        addEventFrom.value = addEventFrom.value.slice(0,5);
+    }
+});
+
+addEventTo.addEventListener("input", (e)=> {
+    // 숫자와 : 말고 다른 글자는 제거
+    addEventTo.value = addEventTo.value.replace(/[^0-9:]/g,"");
+    // 두 숫자가 들어갔을때 자동으로 ":" 추가
+    if(addEventTo.value.length===2) {
+        addEventTo.value += ":";
+    }
+    // 사용자가 5자이상 못쓰도록 설정
+    if(addEventTo.value.length > 5) {
+        addEventTo.value = addEventTo.value.slice(0,5);
+    }
+});
