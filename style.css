@@ -314,7 +314,7 @@ body {
     margin-left: 15px;
     pointer-events: none;
 }
-.events::after {
+.events .event::after {
     content: "✔️";
     position: absolute;
     top: 50%;
@@ -327,8 +327,19 @@ body {
     color: var(--primary-clr);
     transform: translateY(-50%);
 }
-.events:hover::after {
+.events .event:hover::after {
     display: flex;
+}
+
+.events .no-event {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #cbab9d;
 }
 
 /* 이벤트 추가창 */

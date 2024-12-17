@@ -5,7 +5,11 @@ const calendar = document.querySelector(".calendar"),
     next = document.querySelector(".next"),
     todayBtn = document.querySelector(".today-btn"),
     gotoBtn = document.querySelector(".goto-btn"),
-    dateInput = document.querySelector(".date-input");
+    dateInput = document.querySelector(".date-input"),
+    eventDay = document.querySelector(".event-day"),
+    eventDate = document.querySelector(".event-date"),
+    eventsContainer = document.querySelector(".events"),
+    addEventSubmit = document.querySelector(".add-event-btn");
 
 let today = new Date();
 let activeDay;
@@ -101,11 +105,17 @@ function initCalendar() {
             year === new Date().getFullYear() &&
             month === new Date().getMonth()
         ) {
+            activeDay = i;
+            getActiveDay(i);
+            updateEvents(i);
+
+
             // 이벤트를 발견하거나 또한 이벤트 클래스가 추가된다면
+            // 시작시에 오늘 날짜에 active 추가
             if(event) {
-                days += `<div class="day today event "> ${i} </div>`;
+                days += `<div class="day today active event "> ${i} </div>`;
             } else {
-                days += `<div class="day today"> ${i} </div>`;
+                days += `<div class="day today active"> ${i} </div>`;
             }
         }
         //이외 추가
@@ -123,6 +133,9 @@ function initCalendar() {
     }
 
     daysContainer.innerHTML = days;
+
+    //캘린더 초기화 후 listner 추가
+    addListner();
 }
 
 initCalendar();
@@ -254,3 +267,168 @@ addEventTo.addEventListener("input", (e)=> {
         addEventTo.value = addEventTo.value.slice(0,5);
     }
 });
+
+// 렌더링 후 days에 listner추가하는 기능 함수 - active 추가
+function addListner() {
+    const days = document.querySelectorAll(".day");
+    days.forEach((day)=> {
+        day.addEventListener("click", (e)=> {
+            //활성화 일자를 현재 날로 설정?
+            activeDay = Number(e.target.innerHTML);
+
+            //클릭 후 활성화 날 불러오기
+            getActiveDay(e.target.innerHTML);
+            updateEvents(Number(e.target.innerHTML));
+
+
+            // 이미 활성화된 날롤부터 active 제거
+            days.forEach ((day)=> {
+                day.classList.remove("active");
+            });
+
+            // 현재 달에서 이전달의 날로 클릭하면 이전달로 이동하고 active 추가
+            if(e.target.classList.contains("prev-date")) {
+                prevMonth();
+                
+                setTimeout(()=> {
+                    // 그 달의 모든 날 선택
+                    const days = document.querySelectorAll(".day");
+
+                    // 이전달로 이동 한 후 클릭된 active 추가
+                    days.forEach((day)=> {
+                        if(
+                            !day.classList.contains("prev-date") &&
+                            day.innerHTML === e.target.innerHTML
+                        ) {
+                            day.classList.add("active");
+                        }
+                    });
+                }, 100);
+            } 
+            //다음달
+            else if(e.target.classList.contains("next-date")) {
+                nextMonth();
+                
+                setTimeout(()=> {
+                    // 그 달의 모든 날 선택
+                    const days = document.querySelectorAll(".day");
+
+                    // 이전달로 이동 한 후 클릭된 active 추가
+                    days.forEach((day)=> {
+                        if(
+                            !day.classList.contains("next-date") &&
+                            day.innerHTML === e.target.innerHTML
+                        ) {
+                            day.classList.add("active");
+                        }
+                    });
+                }, 100);
+            } 
+            //현재달
+            else {
+                e.target.classList.add("active");
+            }
+
+        });
+    });
+}
+
+
+
+// active 날 이벤트와 위에 날짜 업데이트
+function getActiveDay (date) {
+    const day = new Date(year, month, date);
+    const dayname = day.toString().split(" ")[0];
+    eventDay.innerHTML = dayname;
+    eventDate.innerHTML = date + " " + months[month] + " " + year;
+}
+
+
+// 그 날의 이벤트 보여주는 기능
+function updateEvents(date) {
+    let events = "";
+    eventsArr.forEach((event)=> {
+        //활성화 날에 이벤트를 가진다면
+        if(
+            date === event.day &&
+            month + 1 === event.month &&
+            year === event.year
+        ) {
+            //그 다음 문서에 이벤트 보여주기
+            event.events.forEach((event) => {
+                events += `
+                <div class="event">
+                    <div class="title">
+                        <i class="fas fa-circle"></i>
+                        <h3 class="event-title">${event.title}</h3>
+                    </div>
+                    <div class="event-time"> 
+                        <span class="event-time">${event.time}</span>
+                    </div>
+                </div>
+                `;
+            });
+        }
+    });
+    // 아무 이벤트가 없다면
+    if((events === "")) {
+        events = `
+            <div class = "no-event">
+                <h3>NO EVENTS</h3>
+            </div>
+        `;
+    }
+    eventsContainer.innerHTML = events;
+}
+
+
+// 이벤트 추가하는 기능
+addEventSubmit.addEventListener("click", () => {
+    const eventTitle = addEventTitle.value;
+    const eventTimeFrom = addEventFrom.value;
+    const eventTimeTo = addEventTo.value;
+
+    //유효성검사
+    if(
+        eventTitle === "" ||
+        eventTimeFrom === "" ||
+        eventTimeTo === ""
+    ) {
+        alert("Please fill all the fields");
+        return;
+    }
+
+    const timeFromArr = eventTimeFrom.split(":");
+    const timeToArr = eventTimeTo.split(":");
+
+    if(
+        timeFromArr.length != 2 ||
+        timeToArr.length != 2 ||
+        timeFromArr[0] > 23 ||
+        timeFromArr[1] > 59 ||
+        timeToArr[0] > 23 ||
+        timeToArr[1] > 59 
+    ) {
+        alert("Invalid Time Format");
+    }
+
+
+    const timeFrom = convertTime(eventTimeFrom);
+    const timeTo = convertTime(eventTimeTo);
+
+    const newEvent = {
+        title: eventTitle,
+        time: timeFrom + " - " + timeTo,
+    };
+});
+
+
+function convertTime(time) {
+    let timeArr = time.split(":");
+    let timeHour = timeArr[0];
+    let timeMin = timeArr[1];
+    let timeFormat = timeHour >= 12? "PM" : "AM";
+    timeHour = timeHour % 12 || 12;
+    time = timeHour + ":" + timeMin + " " + timeFormat;
+    return time;
+}
