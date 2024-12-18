@@ -26,35 +26,39 @@ const months = [
 ];
 
 //default 이벤트 배열
-const eventsArr = [
-    {
-        day: 17,
-        month: 12,
-        year: 2024,
-        events: [
-            {
-                title: "Event 1 lorem ipsun dolar sit genfa tersd dsad ",
-                time: "10:00 AM",
-            },
-            {
-                title: "Event 2",
-                time: "11:00 AM",
-            },
-        ],
-    },
-    {
-        day: 30,
-        month: 12,
-        year: 2024,
-        events: [
-            {
-                title: "Event 1 lorem ipsun dolar sit genfa tersd dsad ",
-                time: "10:00 AM",
-            },
-        ],
-    },
-];
+// const eventsArr = [
+//     {
+//         day: 17,
+//         month: 12,
+//         year: 2024,
+//         events: [
+//             {
+//                 title: "Event 1 lorem ipsun dolar sit genfa tersd dsad ",
+//                 time: "10:00 AM",
+//             },
+//             {
+//                 title: "Event 2",
+//                 time: "11:00 AM",
+//             },
+//         ],
+//     },
+//     {
+//         day: 30,
+//         month: 12,
+//         year: 2024,
+//         events: [
+//             {
+//                 title: "Event 1 lorem ipsun dolar sit genfa tersd dsad ",
+//                 time: "10:00 AM",
+//             },
+//         ],
+//     },
+// ];
 
+//빈 배열 설정
+let eventsArr = [];
+//그리고 가져오는 함수 부르기
+getEvents();
 
 // days 추가 함수
 function initCalendar() {
@@ -231,7 +235,7 @@ addEventCloseBtn.addEventListener("click", () => {
 });
 document.addEventListener("click", (e) => {
     //만약 바깥쪽을 눌렀을 경우
-    if(e.target != addEventBtn && !addEventContainer.contains(e.target)) {
+    if(e.target !== addEventBtn && !addEventContainer.contains(e.target)) {
         addEventContainer.classList.remove("active"); //클래스에 active 제거
     }
 });
@@ -378,7 +382,10 @@ function updateEvents(date) {
             </div>
         `;
     }
+    // console.log(events);
     eventsContainer.innerHTML = events;
+    //새로운 하나가 추가됐을때 이벤트 저장
+    saveEvents();
 }
 
 
@@ -402,8 +409,8 @@ addEventSubmit.addEventListener("click", () => {
     const timeToArr = eventTimeTo.split(":");
 
     if(
-        timeFromArr.length != 2 ||
-        timeToArr.length != 2 ||
+        timeFromArr.length !== 2 ||
+        timeToArr.length !== 2 ||
         timeFromArr[0] > 23 ||
         timeFromArr[1] > 59 ||
         timeToArr[0] > 23 ||
@@ -420,6 +427,50 @@ addEventSubmit.addEventListener("click", () => {
         title: eventTitle,
         time: timeFrom + " - " + timeTo,
     };
+
+    let eventAdded = false;
+
+    //eventsarr 비워있지않은가 확인
+    if(eventsArr.length > 0) {
+        //만약 현재 날에 어떤 이벤트이든 이미 있는지 확인하고 그곳에 추가
+        eventsArr.forEach((item) => {
+            if(
+                item.day === activeDay &&
+                item.month === month +1 &&
+                item.year === year 
+            ) {
+                item.events.push(newEvent);
+                eventAdded = true;
+            }
+        });
+    }
+
+    // 만약 이벤트 배열이 비워져있거나 현재 날에 이벤트가 없다면 새롭게 만들기
+    if(!eventAdded) {
+        eventsArr.push({
+            day: activeDay,
+            month: month + 1,
+            year: year,
+            events: [newEvent],
+        });
+    }
+
+    // 추가 이벤트 폼으로부터 active 제거
+    addEventContainer.classList.remove("active");
+    // fields 비우기
+    addEventTitle.value = "";
+    addEventFrom.value = "";
+    addEventTo.value = "";
+
+    // 현재 추가된 이벤트 보여주기
+    updateEvents(activeDay);
+
+
+    // (아직 없는 경우) 새롭게 추가된 날에 event 클래스 추가
+    const activeDayElem = document.querySelector(".day.active");
+    if(!activeDayElem.classList.contains("event")) {
+        activeDayElem.classList.add("event");
+    }
 });
 
 
@@ -431,4 +482,55 @@ function convertTime(time) {
     timeHour = timeHour % 12 || 12;
     time = timeHour + ":" + timeMin + " " + timeFormat;
     return time;
+}
+
+
+
+// 클릭시 이벤트가 제거되는 기능 추가하기
+eventsContainer.addEventListener("click", (e) => {
+    if(e.target.classList.contains("event")) {
+        const eventTitle = e.target.children[0].children[1].innerHTML;
+        //이벤트의 제목을 가져오고 제목을 배열에서 검색한 다음 삭제하기
+        eventsArr.forEach((event) => {
+            if(
+                event.day === activeDay &&
+                event.month === month + 1 &&
+                event.year === year
+            ) {
+                event.events.forEach((item, index) => {
+                    if(item.title === eventTitle) {
+                        event.events.splice(index, 1);
+                    }s
+                });
+
+                // 그 날짜에 남아있는 이벤트가 없다면 제거
+                if(event.events.length === 0) {
+                    eventsArr.splice(eventsArr.indexOf(event), 1);
+                    // 하루 제거한 후 해당 날짜의 active 클래스도 제거
+                    
+                    const activeDayElem = document.querySelector(".day.active");
+                    if(activeDayElem.classList.contains("event")) {
+                        activeDayElem.classList.remove("event");
+                    }
+
+                }
+            }
+        });
+
+        // 배열로부터 제거 후 이벤트 업데이트
+        updateEvents(activeDay);
+    }
+});
+
+
+// 로컬 저장소에 이벤트 저장하고 그곳으로부터 가져오는 함수
+function saveEvents() {
+    localStorage.setItem("events", JSON.stringify(eventsArr));
+}
+function getEvents() {
+    if(localStorage.getItem("event" === null)) {
+        return;
+    }
+        eventsArr.push( ...JSON.parse(localStorage.getItem("events")));
+
 }
